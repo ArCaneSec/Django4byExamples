@@ -6,4 +6,28 @@
  Published {{ post.publish }} by {{ post.author }}
  </p>
  {{ post.body|linebreaks }}
+ <p>
+    <a href="{% url "blog:post_share" post.id %}">
+    Share this post
+    </a>
+    </p>
+    {% with comments.count as total_comments %}
+    <h2>
+    {{ total_comments }} comment{{ total_comments|pluralize }}
+    </h2>
+    <hr>
+    <div class="comments">
+    {% for comment in comments %}
+        <div class="comment">
+            <p class="info">
+                comment {{ forloop.counter }} by {{ comment.name }} at {{ comment.created }} <br>
+            </p>
+                {{ comment.body|linebreaks }}
+        </div>
+    {% empty %}
+        <p> There is no comment for this post </p>
+    {% endfor %}
+    </div>    
+    {% endwith %}
+    {% include "blog/post/includes/comment_form.html" %}
 {% endblock %}
