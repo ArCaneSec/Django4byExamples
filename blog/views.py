@@ -4,6 +4,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
+from django.db.models import Count
 from taggit.models import Tag
 from .models import Post, Comment
 from .forms import EmailPostForm, AddCommentForm
@@ -16,8 +17,8 @@ def post_lists(request, tag_slug=None):
     tag = None
     if tag_slug:
         tag = get_object_or_404(Tag, slug=tag_slug)
-        posts = posts.filter(tags__in=[tag]) 
-     
+        posts = posts.filter(tags__in=[tag])
+
     paginator = Paginator(posts, 2)
     page_number = request.GET.get("page", 1)
     try:
@@ -29,7 +30,7 @@ def post_lists(request, tag_slug=None):
     except PageNotAnInteger:
         posts = paginator.page(1)
 
-    return render(request, "blog/post/list.html", {"posts": post_lists, "tag":tag})
+    return render(request, "blog/post/list.html", {"posts": post_lists, "tag": tag})
 
 
 def post_details(request, year, month, day, post):
@@ -43,10 +44,18 @@ def post_details(request, year, month, day, post):
     comments = post.comments.filter(active=True)
     form = AddCommentForm()
 
+    post_tags_ids = post.tags.values_list("id", flat=True)
+    similar_posts = Post.objects.filter(tags__in=post_tags_ids).exclude(id=post.id)
+    similar_posts = similar_posts.annotate(same_tags=Count("tags")).order_by(
+        "-same_tags", "-publish"
+    )[:4]
+    # similar_posts = post.tags.similar_objects()
+    # tags = post.tags.all()
+
     return render(
         request,
         "blog/post/detail.html",
-        {"post": post, "comments": comments, "form": form},
+        {"post": post, "comments": comments, "form": form, "similar_posts":similar_posts}
     )
 
 
@@ -67,7 +76,6 @@ def post_email(request, post_id):
     if request.method == "POST":
         form = EmailPostForm(request.POST)
         if form.is_valid():
-           
             data = form.cleaned_data
             post_url = request.build_absolute_uri(post.get_absolute_url())
             print(post.get_absolute_url())
