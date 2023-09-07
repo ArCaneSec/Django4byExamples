@@ -3,6 +3,8 @@ from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
+from . import managers
+
 
 # Create your models here.
 class Post(models.Model):
@@ -18,6 +20,8 @@ class Post(models.Model):
         DRAFT = "DF", "Draft"
         PUBLISHED = "PB", "Published"
 
+    objects = models.Manager()
+    published = managers.PublishedManager()
     tags = TaggableManager()
 
     author = models.ForeignKey(
