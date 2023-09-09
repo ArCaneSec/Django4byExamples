@@ -14,7 +14,12 @@
  <div id="sidebar">
  <h2>My blog</h2>
  <p>This is my blog.</p>
- <p>I've written {% total_posts %} so far!</p>
+ <p>I've written {% total_posts %} posts so far!</p>
+ <p>
+    <a href="{% url "blog:post_feed" %}">
+        Subscribe to RSS Feed
+    </a>
+ </p>
  <h3 class="latest_posts">Latest Posts:</h3>
  {% show_latest_posts 3 %}
  <h3 class="most_commented_posts">Most Commented Posts:</h3>
