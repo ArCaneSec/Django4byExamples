@@ -5,11 +5,30 @@ from django.views.generic import ListView
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
 from django.db.models import Count
+from django.contrib.postgres.search import SearchVector
 from taggit.models import Tag
 from .models import Post
-from .forms import EmailPostForm, AddCommentForm
+from .forms import EmailPostForm, AddCommentForm, SearchForm
 
 # Create your views here.
+
+
+def post_search(request):
+    form = SearchForm()
+    query = None
+    results = []
+    if "query" in request.GET:
+        form = SearchForm(request.GET)
+        if form.is_valid():
+            query = form.cleaned_data["query"]
+            results = Post.published.annotate(
+                search=SearchVector("title", "body"),
+            ).filter(search=query)
+    return render(
+        request,
+        "blog/post/search.html",
+        {"form": form, "query": query, "results": results},
+    )
 
 
 def post_lists(request, tag_slug=None):
@@ -55,7 +74,12 @@ def post_details(request, year, month, day, post):
     return render(
         request,
         "blog/post/detail.html",
-        {"post": post, "comments": comments, "form": form, "similar_posts":similar_posts}
+        {
+            "post": post,
+            "comments": comments,
+            "form": form,
+            "similar_posts": similar_posts,
+        },
     )
 
 
